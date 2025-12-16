@@ -90,24 +90,24 @@ String getDateTimeString() {
 }
 
 void RelaysOp() {
-  digitalWrite(Relay1, true);
-  digitalWrite(Relay3, true);
+  digitalWrite(Relay1, HIGH);
+  digitalWrite(Relay3, HIGH);
 }
 
 void RelaysCl() {
-  digitalWrite(Relay1, false);
-  digitalWrite(Relay3, false);
+  digitalWrite(Relay1, LOW);
+  digitalWrite(Relay3, LOW);
 }
 
 void RelaysAct() {
-  digitalWrite(Relay2, true); //HIGH
-  digitalWrite(Relay4, true); //HIGH
+  digitalWrite(Relay2, HIGH); //HIGH
+  digitalWrite(Relay4, HIGH); //HIGH
 }
 
 // Desactiva los cuatro relés.
 void RelaysDes() {
-  digitalWrite(Relay2, false); //LOW
-  digitalWrite(Relay4, false); //LOW
+  digitalWrite(Relay2, LOW); //LOW
+  digitalWrite(Relay4, LOW); //LOW
 }
 
 
