@@ -74,7 +74,6 @@ String getDateTimeString() {
   int minute = dateTime.substring(14, 16).toInt();
   int second = dateTime.substring(17, 19).toInt();
 
-  // Llenar arreglos globales (si los usas)
   fechaArr[0] = day;
   fechaArr[1] = month;
   fechaArr[2] = year;
@@ -100,14 +99,14 @@ void RelaysCl() {
 }
 
 void RelaysAct() {
-  digitalWrite(Relay2, HIGH); //HIGH
-  digitalWrite(Relay4, HIGH); //HIGH
+  digitalWrite(Relay2, HIGH);  //HIGH
+  digitalWrite(Relay4, HIGH);  //HIGH
 }
 
 // Desactiva los cuatro relés.
 void RelaysDes() {
-  digitalWrite(Relay2, LOW); //LOW
-  digitalWrite(Relay4, LOW); //LOW
+  digitalWrite(Relay2, LOW);  //LOW
+  digitalWrite(Relay4, LOW);  //LOW
 }
 
 
@@ -144,7 +143,6 @@ void esperar(int limite, int sigEtapa) {
       Serial.println("Pausa detectada durante espera.");
       // Espera aquí hasta que se quite la pausa
       while (pausaActiva) {
-        //webServer.handleClient();
         actualizarEstadoPausa();  // Sigue escuchando el botón para reanudar
         delay(100);
       }
@@ -159,7 +157,6 @@ void esperar(int limite, int sigEtapa) {
       portEXIT_CRITICAL(&timerMux);
       segundosTranscurridos++;
     }
-    //webServer.handleClient();
     delay(5);  // Evita saturar la CPU
   }
 
@@ -209,5 +206,5 @@ void wifiBegin() {
     wifiConnectedPreviously = false;
   }
 
-  wifiConnecting = false; // Marca fin del intento
+  wifiConnecting = false;  // Marca fin del intento
 }

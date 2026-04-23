@@ -7,34 +7,54 @@ private:
   int tiempoAbrir;
   int tiempoCerrar;
   int tiempoLazo;
-  int etapaInterna;         // Cambiado para evitar conflicto con variable global
-  bool pausaActivaInterna;  // Cambiado para evitar conflicto
+  int etapaInterna;
+  bool pausaActivaInterna;
+  unsigned long tiempoEtapaInicio;  // Tiempo cuando inicia la etapa
+  int tiempoEsperaActual;           // Tiempo que se debe esperar en esta etapa
+  bool esperandoEtapa;              // Si estamos esperando
+
 public:
   ModoBarreraSimple()
-    : tiempoAbrir(), tiempoCerrar(), tiempoLazo(1), etapaInterna(0), pausaActivaInterna(false) {}
+    : tiempoAbrir(), tiempoCerrar(), tiempoLazo(1), etapaInterna(0),
+      pausaActivaInterna(false), tiempoEtapaInicio(0), tiempoEsperaActual(0),
+      esperandoEtapa(false) {}
 
   void execute() override {
-    digitalWrite(ledPin, HIGH);
+
     actualizarEstadoPausa();
 
     if (pausaActiva) return;
+    digitalWrite(ledPin, HIGH);
+    digitalWrite(ledV, LOW);
 
+    // Si estamos esperando, verificar si ha pasado el tiempo
+    if (esperandoEtapa) {
+      unsigned long tiempoTranscurrido = millis() - tiempoEtapaInicio;
+      if (tiempoTranscurrido >= (tiempoEsperaActual * 1000)) {
+        esperandoEtapa = false;
+        // La siguiente etapa se ejecutará en la próxima llamada a execute()
+      } else {
+        // Todavía estamos esperando, no hacer nada
+        return;
+      }
+    }
+
+    // Máquina de estados
     switch (etapaInterna) {
       case 0:
-        Serial.println("MODO SIMPLE - ETAPA 1: Cerrando...");
+        Serial.println("MODO SIMPLE - ETAPA 0: Cerrando...");
         RelaysOp();
-        esperar(tiempoAbrir, 1);
+        iniciarEspera(tiempoAbrir, 1);
         break;
 
       case 1:
-        Serial.println("MODO SIMPLE - ETAPA 0: Abriendo...");
+        Serial.println("MODO SIMPLE - ETAPA 1: Abriendo...");
         RelaysCl();
-        esperar(tiempoCerrar, 2);
+        iniciarEspera(tiempoCerrar, 2);
         break;
 
       case 2:
         Serial.println("MODO SIMPLE - ETAPA 2: Subiendo datos...");
-        //subiryVerificarInfo();
         guardarConteoLocal();
         Serial.print("Cuentas actuales: ");
         Serial.println(counter);
@@ -67,33 +87,15 @@ public:
     return "Simple Barrier";
   }
 
-  void esperar(int limite, int sigEtapa) {
-    unsigned long startTime = millis();
-    int segundosTranscurridos = 0;
-
-    while (segundosTranscurridos < limite) {
-      actualizarEstadoPausa();
-
-      if (pausaActiva) { // Usar variable global
-        Serial.println("Pausa detectada durante espera.");
-        while (pausaActiva) {
-          actualizarEstadoPausa();
-          delay(100);
-        }
-        Serial.println("Reanudando espera...");
-        startTime = millis(); // Reiniciar tiempo después de pausa
-      }
-
-      if (millis() - startTime >= 1000) {
-        startTime = millis();
-        segundosTranscurridos++;
-        Serial.print("SEGUNDO: ");
-        Serial.println(segundosTranscurridos);
-      }
-      
-      delay(5);
-    }
-
+private:
+  // Inicia una espera sin bloqueo
+  void iniciarEspera(int segundos, int sigEtapa) {
+    tiempoEtapaInicio = millis();
+    tiempoEsperaActual = segundos;
     etapaInterna = sigEtapa;
+    esperandoEtapa = true;
+    Serial.print("Esperando ");
+    Serial.print(segundos);
+    Serial.println(" segundos...");
   }
 };

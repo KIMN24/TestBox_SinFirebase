@@ -35,25 +35,27 @@ public:
       addLogEvent("[START] ");
     });
 
-    server.on("/setTimes", HTTP_POST, [this]() { handleSetTimes(); });
+    server.on("/setTimes", HTTP_POST, [this]() {
+      handleSetTimes();
+    });
 
     server.on("/get-counter", HTTP_GET, [this]() {
       server.send(200, "text/plain", String(counter));
     });
 
     server.on("/reset-counter", HTTP_POST, [this]() {
-  if (!server.authenticate(www_username, www_password)) {
-    return server.requestAuthentication();
-  }
+      if (!server.authenticate(www_username, www_password)) {
+        return server.requestAuthentication();
+      }
 
-  counter = 0;
+      counter = 0;
 
-  // Guarda el valor reiniciado en memoria interna
-  prefs.putInt("contador", counter);
+      // Guarda el valor reiniciado en memoria interna
+      prefs.putInt("contador", counter);
 
-  Serial.println("Contador reiniciado en memoria local");
-  server.send(200, "text/plain", "Conteo reiniciado");
-});
+      Serial.println("Contador reiniciado en memoria local");
+      server.send(200, "text/plain", "Conteo reiniciado");
+    });
 
 
     server.on("/event-log", HTTP_GET, [this]() {
@@ -64,17 +66,21 @@ public:
       server.send(200, "text/plain", response);
     });
 
-     server.on("/set-mode", HTTP_POST, [this]() {
+    server.on("/set-mode", HTTP_POST, [this]() {
       String modoStr;
       if (server.hasArg("modo")) {
         int nuevoModo = server.arg("modo").toInt();
 
-        if (nuevoModo == 0){ modoActual = &modoSimple;
-        modoStr = "Barrera Simple";}
-        else if (nuevoModo == 1){ modoActual = &modoLazo;
-        modoStr = "Barrera con Lazo";}
-        else if (nuevoModo == 2) {modoActual = &eventos;
-        modoStr = "Eventos (L0-L2)";}
+        if (nuevoModo == 0) {
+          modoActual = &modoSimple;
+          modoStr = "Barrera Simple";
+        } else if (nuevoModo == 1) {
+          modoActual = &modoLazo;
+          modoStr = "Barrera con Lazo";
+        } else if (nuevoModo == 2) {
+          modoActual = &eventos;
+          modoStr = "Eventos (L0-L2)";
+        }
         modo = nuevoModo;
 
         Serial.print("Modo cambiado a: ");
@@ -292,27 +298,33 @@ private:
         <div class='form-group'>\
           <label>Selecciona el modo:</label>\
           <select id='modoSelect'>\
-            <option value='0'" + String((modo == 0) ? " selected" : "") + ">Barrera Simple</option>\
-            <option value='1'" + String((modo == 1) ? " selected" : "") + ">Barrera con Lazo</option>\
-            <option value='2'" + String((modo == 2) ? " selected" : "") + ">Eventos (L0-L2)</option>\
+            <option value='0'"
+                  + String((modo == 0) ? " selected" : "") + ">Barrera Simple</option>\
+            <option value='1'"
+                  + String((modo == 1) ? " selected" : "") + ">Barrera con Lazo</option>\
+            <option value='2'"
+                  + String((modo == 2) ? " selected" : "") + ">Eventos (L0-L2)</option>\
           </select>\
           <button class='boton-update' onclick='cambiarModo()'>Cambiar Modo</button>\
         </div>";
 
-  // Mostrar selección de eventos solo si el modo es Eventos
-  if (modo == 2) {
-    html += "<div class='form-group'>\
+    // Mostrar selección de eventos solo si el modo es Eventos
+    if (modo == 2) {
+      html += "<div class='form-group'>\
           <label>Evento:</label>\
           <select id='eventoSelect'>\
-            <option value='0'" + String((eventos.getEvento() == 0) ? " selected" : "") + ">L0</option>\
-            <option value='1'" + String((eventos.getEvento() == 1) ? " selected" : "") + ">L1</option>\
-            <option value='2'" + String((eventos.getEvento() == 2) ? " selected" : "") + ">L2</option>\
+            <option value='0'"
+              + String((eventos.getEvento() == 0) ? " selected" : "") + ">L0</option>\
+            <option value='1'"
+              + String((eventos.getEvento() == 1) ? " selected" : "") + ">L1</option>\
+            <option value='2'"
+              + String((eventos.getEvento() == 2) ? " selected" : "") + ">L2</option>\
           </select>\
           <button class='boton-update' onclick='cambiarEvento()'>Cambiar Evento</button>\
         </div>";
-  }
+    }
 
-  html += "    </div>\
+    html += "    </div>\
       \
       <div class='card'>\
         <h2>Control de Prueba</h2>\
@@ -324,11 +336,13 @@ private:
         <h2>Configuración de Tiempos</h2>\
         <div class='form-group'>\
           <label>Tiempo para abrir (s):</label>\
-          <input type='number' id='abrir' class='input-open' value='" + String(tiempoAbrir) + "' min='1'>\
+          <input type='number' id='abrir' class='input-open' value='"
+            + String(tiempoAbrir) + "' min='1'>\
         </div>\
         <div class='form-group'>\
           <label>Tiempo para cerrar (s):</label>\
-          <input type='number' id='cerrar' class='input-close' value='" + String(tiempoCerrar) + "' min='1'>\
+          <input type='number' id='cerrar' class='input-close' value='"
+            + String(tiempoCerrar) + "' min='1'>\
         </div>\
         <div class='form-group'>\
           <button class='boton-update' onclick='cambiarTiempos()'>Actualizar Tiempos</button>\

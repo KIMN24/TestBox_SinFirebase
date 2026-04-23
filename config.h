@@ -1,13 +1,14 @@
 // ========================== DEFINICIÓN DE PINES ============================
 #pragma once
-#define Relay1 16     //K1 relé
-#define Relay2 17     //K2 relé
+#define Relay1 19     //K1 relé
+#define Relay2 21     //K2 relé
 #define Relay3 22     //K3 relé
 #define Relay4 23     //K4 relé
 #define ledPin 4      //Led rojo(pausa)
 #define ledV   15     //Led verde(ejecutandose)
 #define Pause  5      //Boton para pausar el proceso
 #define WifiConn 2    //Led para saber si esta conectado al wifi
+#define ledOn 13      //Led para equipo encendido.
 
 // ========================== CREDENCIALES WIFI =============================
 

@@ -8,52 +8,76 @@ private:
   int tiempoAbrir;
   int tiempoCerrar;
   int tiempoLazo;
-  int etapaInterna;         // Cambiado para evitar conflicto con variable global
-  bool pausaActivaInterna;  // Cambiado para evitar conflicto
+  int etapaInterna;
+  bool pausaActivaInterna;
+  unsigned long tiempoEtapaInicio;
+  int tiempoEsperaActual;
+  bool esperandoEtapa;
 
 public:
   ModoBarreraLazo()
-    : tiempoAbrir(), tiempoCerrar(), tiempoLazo(95), etapaInterna(-1), pausaActivaInterna(false) {}
+    : tiempoAbrir(), tiempoCerrar(), tiempoLazo(95), etapaInterna(-1),
+      pausaActivaInterna(false), tiempoEtapaInicio(0), tiempoEsperaActual(0),
+      esperandoEtapa(false) {}
 
-void execute() override {
-    digitalWrite(ledPin, HIGH);
+  void execute() override {
+
     actualizarEstadoPausa();
-    if (pausaActiva) return; // Usar la variable global de pausa
+    if (pausaActiva) return;
+    digitalWrite(ledPin, HIGH);
+    digitalWrite(ledV, LOW);
+
+    // Si estamos esperando, verificar si ha pasado el tiempo
+    if (esperandoEtapa) {
+      unsigned long tiempoTranscurrido = millis() - tiempoEtapaInicio;
+      // Determinar si esperar en ms o segundos
+      unsigned long limiteMs = tiempoEsperaActual;
+      if (tiempoEsperaActual > 5000) {
+        // Es un valor que se debe interpretar como segundos
+        limiteMs = tiempoEsperaActual * 1000;
+      }
+
+      if (tiempoTranscurrido >= limiteMs) {
+        esperandoEtapa = false;
+      } else {
+        return;
+      }
+    }
 
     switch (etapaInterna) {
-    case -1:
+      case -1:
         etapaInterna = 0;
         return;
 
-    case 0: // R1 ON (LOW), R2 OFF (HIGH)
+      case 0:  // R1 ON (LOW), R2 OFF (HIGH)
         RelaysCl();
         RelaysAct();
         Serial.println("ETAPA 0: R1 ON (activado), R2 OFF (desactivado)");
-        esperar(tiempoAbrir, 1);
+        iniciarEspera(tiempoAbrir * 1000, 1);  // en ms
         break;
 
-    case 1: // R1 ON, R2 ON (tiempoLazo)
+      case 1:  // R1 ON, R2 ON (tiempoLazo)
         RelaysCl();
         RelaysDes();
         Serial.println("ETAPA 1: R2 activado por tiempoLazo");
-        esperarMs(tiempoLazo, 2);
+        iniciarEspera(tiempoLazo, 2);  // en ms
         break;
 
-    case 2: // R1 ON, R2 OFF
+      case 2:  // R1 ON, R2 OFF
         RelaysCl();
         RelaysAct();
         guardarConteoLocal();
         Serial.println("ETAPA 2: R2 apagado, R1 sigue activado");
         Serial.print("Cuentas actuales: ");
         Serial.println(counter);
-        esperar(1, 3);
+        iniciarEspera(1000, 3);  // 1 segundo en ms
         break;
 
-    case 3: // R1 OFF, R2 OFF - FIN DEL CICLO
+      case 3:  // R1 OFF, R2 OFF - FIN DEL CICLO
         RelaysOp();
         RelaysAct();
         Serial.println("ETAPA 3: R1 y R2 desactivados - Fin de ciclo");
-        esperar(tiempoCerrar, 0);
+        iniciarEspera(tiempoCerrar * 1000, 0);  // en ms
         break;
     }
   }
@@ -61,11 +85,11 @@ void execute() override {
   void setTiempoAbrir(int tiempo) override {
     tiempoAbrir = tiempo;
   }
-  
+
   void setTiempoCerrar(int tiempo) override {
     tiempoCerrar = tiempo;
   }
-  
+
   void setTiempoLazo(int tiempo) override {
     tiempoLazo = tiempo;
   }
@@ -73,11 +97,11 @@ void execute() override {
   int getTiempoAbrir() override {
     return tiempoAbrir;
   }
-  
+
   int getTiempoCerrar() override {
     return tiempoCerrar;
   }
-  
+
   int getTiempoLazo() override {
     return tiempoLazo;
   }
@@ -87,55 +111,13 @@ void execute() override {
   }
 
 private:
-  void esperar(int limite, int sigEtapa) {
-    unsigned long startTime = millis();
-    int segundosTranscurridos = 0;
-
-    while (segundosTranscurridos < limite) {
-      actualizarEstadoPausa();
-
-      if (pausaActiva) { // Usar variable global
-        Serial.println("Pausa detectada durante espera.");
-        while (pausaActiva) {
-          actualizarEstadoPausa();
-          delay(100);
-        }
-        Serial.println("Reanudando espera...");
-        startTime = millis(); // Reiniciar tiempo después de pausa
-      }
-
-      if (millis() - startTime >= 1000) {
-        startTime = millis();
-        segundosTranscurridos++;
-        Serial.print("SEGUNDO: ");
-        Serial.println(segundosTranscurridos);
-      }
-      
-      delay(5);
-    }
-
+  void iniciarEspera(int tiempoMs, int sigEtapa) {
+    tiempoEtapaInicio = millis();
+    tiempoEsperaActual = tiempoMs;
     etapaInterna = sigEtapa;
-  }
-  // ==================== ESPERA EN MILISEGUNDOS ====================
-  void esperarMs(int limiteMs, int sigEtapa) {
-    unsigned long startTime = millis();
-
-    while (millis() - startTime < (unsigned long)limiteMs) {
-      actualizarEstadoPausa();
-
-      if (pausaActiva) {
-        Serial.println("Pausa detectada durante espera (ms).");
-        while (pausaActiva) {
-          actualizarEstadoPausa();
-          delay(50);
-        }
-        Serial.println("Reanudando espera...");
-        startTime = millis(); // reinicia conteo tras la pausa
-      }
-
-      delay(1);
-    }
-
-    etapaInterna = sigEtapa;
+    esperandoEtapa = true;
+    Serial.print("Esperando ");
+    Serial.print(tiempoMs);
+    Serial.println(" ms...");
   }
 };
